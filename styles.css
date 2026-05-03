@@ -254,6 +254,9 @@ section {
     color: var(--white);
     cursor: pointer;
 }
+
+.hero {
+    position: relative;
     height: 400px;
     min-height: 600px;
     overflow: hidden;
