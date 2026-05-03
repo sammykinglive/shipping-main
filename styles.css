@@ -25,6 +25,11 @@
 
 html {
     scroll-behavior: smooth;
+    scroll-padding-top: 100px;
+}
+
+section[id] {
+    scroll-margin-top: 100px;
 }
 
 body {
@@ -255,15 +260,39 @@ section {
     cursor: pointer;
 }
 
+    .scroll-down {
+        position: absolute;
+        left: 50%;
+        bottom: 40px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        color: var(--white);
+        text-align: center;
+        transition: transform 0.3s ease, background 0.3s ease;
+        animation: bounce 2s infinite ease-in-out;
+        z-index: 2;
+    }
 
+    .scroll-down:hover {
+        transform: translateX(-50%) translateY(-3px);
+        background: rgba(255, 255, 255, 0.3);
+    }
 
-
-
-
-
-/* Hero Section with Video */
-.hero {
-    position: relative;
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateX(-50%) translateY(0);
+        }
+        50% {
+            transform: translateX(-50%) translateY(12px);
+        }
+    }
     height: 400px;
     min-height: 600px;
     overflow: hidden;
