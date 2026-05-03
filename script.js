@@ -1,189 +1,221 @@
-// Shared functionality across all pages
+// ========== MAIN INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
-    // Mobile menu toggle - Fixed version
+    // ---------- MOBILE MENU ----------
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const nav = document.querySelector('.nav');
+    const body = document.body;
     
     if (mobileMenuBtn && nav) {
-        mobileMenuBtn.addEventListener('click', function() {
+        mobileMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
             nav.classList.toggle('active');
             const icon = this.querySelector('i');
-            icon.classList.toggle('fa-bars');
-            icon.classList.toggle('fa-times');
-            
-            // Toggle body overflow when menu is open
+            if (icon) {
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            }
             if (nav.classList.contains('active')) {
-                document.body.style.overflow = 'hidden';
+                body.classList.add('menu-open');
+                body.style.overflow = 'hidden';
             } else {
-                document.body.style.overflow = '';
+                body.classList.remove('menu-open');
+                body.style.overflow = '';
             }
         });
-
-        // Close mobile menu when clicking on a link
+        
         const navLinks = document.querySelectorAll('.nav-list a');
         navLinks.forEach(link => {
             link.addEventListener('click', function() {
                 nav.classList.remove('active');
-                mobileMenuBtn.querySelector('i').classList.remove('fa-times');
-                mobileMenuBtn.querySelector('i').classList.add('fa-bars');
-                document.body.style.overflow = '';
+                const icon = mobileMenuBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+                body.classList.remove('menu-open');
+                body.style.overflow = '';
             });
         });
+        
+        document.addEventListener('click', function(event) {
+            if (nav.classList.contains('active') && 
+                !nav.contains(event.target) && 
+                !mobileMenuBtn.contains(event.target)) {
+                nav.classList.remove('active');
+                const icon = mobileMenuBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+                body.classList.remove('menu-open');
+                body.style.overflow = '';
+            }
+        });
+        
+        nav.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
     }
-
-    // Header scroll effect
+    
+    // ---------- HEADER SCROLL EFFECT ----------
     const header = document.querySelector('.header');
     if (header) {
         window.addEventListener('scroll', function() {
-            header.classList.toggle('scrolled', window.scrollY > 100);
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
         });
     }
-
-    // Hero Slider
+    
+    // ---------- HERO SLIDER (if slides exist) ----------
     const heroSlides = document.querySelectorAll('.hero-slide');
     const slideDotsContainer = document.querySelector('.slide-dots');
     const slidePrevBtn = document.querySelector('.slide-prev');
     const slideNextBtn = document.querySelector('.slide-next');
     let currentSlide = 0;
     let slideInterval;
-
-    if (heroSlides.length > 0) {
-        // Create dots for slides
-        heroSlides.forEach((slide, index) => {
+    
+    if (heroSlides.length > 0 && slideDotsContainer) {
+        // Create dots
+        heroSlides.forEach((_, index) => {
             const dot = document.createElement('div');
             dot.classList.add('slide-dot');
             if (index === 0) dot.classList.add('active');
             dot.addEventListener('click', () => goToSlide(index));
             slideDotsContainer.appendChild(dot);
         });
-
+        
         const slideDots = document.querySelectorAll('.slide-dot');
-
+        
         function showSlide(index) {
             heroSlides.forEach(slide => slide.classList.remove('active'));
             slideDots.forEach(dot => dot.classList.remove('active'));
-            
-            currentSlide = index % heroSlides.length;
+            currentSlide = (index + heroSlides.length) % heroSlides.length;
             heroSlides[currentSlide].classList.add('active');
             slideDots[currentSlide].classList.add('active');
         }
-
-        function nextSlide() {
-            showSlide(currentSlide + 1);
-        }
-
-        function prevSlide() {
-            showSlide(currentSlide - 1 + heroSlides.length);
-        }
-
-        // Initialize slider
-        function initSlider() {
-            showSlide(0);
-            slideInterval = setInterval(nextSlide, 5000);
-            
-            // Event listeners
-            slideNextBtn.addEventListener('click', () => {
-                nextSlide();
-                resetSlideInterval();
-            });
-            
-            slidePrevBtn.addEventListener('click', () => {
-                prevSlide();
-                resetSlideInterval();
-            });
-
-            const heroSection = document.querySelector('.hero');
-            heroSection.addEventListener('mouseenter', () => clearInterval(slideInterval));
-            heroSection.addEventListener('mouseleave', () => {
-                slideInterval = setInterval(nextSlide, 5000);
-            });
-        }
-
+        
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        function goToSlide(index) { showSlide(index); resetSlideInterval(); }
+        
         function resetSlideInterval() {
             clearInterval(slideInterval);
             slideInterval = setInterval(nextSlide, 5000);
         }
-
-        initSlider();
+        
+        if (slideNextBtn && slidePrevBtn) {
+            slideNextBtn.addEventListener('click', () => { nextSlide(); resetSlideInterval(); });
+            slidePrevBtn.addEventListener('click', () => { prevSlide(); resetSlideInterval(); });
+        }
+        
+        showSlide(0);
+        slideInterval = setInterval(nextSlide, 5000);
+        
+        const heroSection = document.querySelector('.hero');
+        if (heroSection) {
+            heroSection.addEventListener('mouseenter', () => clearInterval(slideInterval));
+            heroSection.addEventListener('mouseleave', () => { slideInterval = setInterval(nextSlide, 5000); });
+        }
     }
-
-    // Testimonials Slider
+    
+    // ---------- TESTIMONIALS SLIDER (if exists) ----------
     const testimonials = document.querySelectorAll('.testimonial');
     const testimonialDotsContainer = document.querySelector('.testimonial-dots');
     const testimonialPrevBtn = document.querySelector('.testimonial-prev');
     const testimonialNextBtn = document.querySelector('.testimonial-next');
     let currentTestimonial = 0;
-
-    if (testimonials.length > 0) {
-        // Create dots for testimonials
-        testimonials.forEach((testimonial, index) => {
+    
+    if (testimonials.length > 0 && testimonialDotsContainer) {
+        testimonials.forEach((_, index) => {
             const dot = document.createElement('div');
             dot.classList.add('testimonial-dot');
             if (index === 0) dot.classList.add('active');
             dot.addEventListener('click', () => goToTestimonial(index));
             testimonialDotsContainer.appendChild(dot);
         });
-
+        
         const testimonialDots = document.querySelectorAll('.testimonial-dot');
-
+        
         function showTestimonial(index) {
-            testimonials.forEach(testimonial => testimonial.classList.remove('active'));
+            testimonials.forEach(t => t.classList.remove('active'));
             testimonialDots.forEach(dot => dot.classList.remove('active'));
-            
-            currentTestimonial = index % testimonials.length;
+            currentTestimonial = (index + testimonials.length) % testimonials.length;
             testimonials[currentTestimonial].classList.add('active');
             testimonialDots[currentTestimonial].classList.add('active');
         }
-
-        function nextTestimonial() {
-            showTestimonial(currentTestimonial + 1);
+        
+        function nextTestimonial() { showTestimonial(currentTestimonial + 1); }
+        function prevTestimonial() { showTestimonial(currentTestimonial - 1); }
+        function goToTestimonial(index) { showTestimonial(index); }
+        
+        if (testimonialNextBtn && testimonialPrevBtn) {
+            testimonialNextBtn.addEventListener('click', nextTestimonial);
+            testimonialPrevBtn.addEventListener('click', prevTestimonial);
         }
-
-        function prevTestimonial() {
-            showTestimonial(currentTestimonial - 1 + testimonials.length);
-        }
-
-        // Initialize testimonial slider
-        testimonialNextBtn.addEventListener('click', nextTestimonial);
-        testimonialPrevBtn.addEventListener('click', prevTestimonial);
+        
+        showTestimonial(0);
         setInterval(nextTestimonial, 7000);
     }
-
-    // Smooth scrolling for anchor links
+    
+    // ---------- SMOOTH SCROLLING for anchor links ----------
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            
             const targetId = this.getAttribute('href');
-            if (targetId === '#') return;
-            
+            if (targetId === '#' || targetId === '') return;
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
+                e.preventDefault();
                 window.scrollTo({
                     top: targetElement.offsetTop - 80,
                     behavior: 'smooth'
                 });
+                // Close mobile menu if open
+                if (nav && nav.classList.contains('active')) {
+                    nav.classList.remove('active');
+                    if (mobileMenuBtn) {
+                        const icon = mobileMenuBtn.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    }
+                    body.classList.remove('menu-open');
+                    body.style.overflow = '';
+                }
             }
         });
     });
-
-    // Tracking Form Submission
-    const trackingForm = document.getElementById('trackingForm');
-    if (trackingForm) {
-        trackingForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const trackingNumber = document.getElementById('trackingNumber').value.trim();
-            
-            if (trackingNumber) {
-                simulateTrackingResponse(trackingNumber);
-            }
-        });
-    }
-
-    // Animate stats counter
+    
+    // ---------- STATS COUNTER (with decimal support) ----------
     const statNumbers = document.querySelectorAll('.stat-number');
     if (statNumbers.length > 0) {
+        let animated = false;
+        function animateStats() {
+            if (animated) return;
+            animated = true;
+            statNumbers.forEach(stat => {
+                const target = parseFloat(stat.getAttribute('data-count'));
+                const isFloat = (target % 1 !== 0);
+                let count = 0;
+                const duration = 2000;
+                const increment = target / (duration / 16);
+                const updateCount = () => {
+                    count += increment;
+                    if (count < target) {
+                        stat.textContent = isFloat ? count.toFixed(1) : Math.floor(count);
+                        requestAnimationFrame(updateCount);
+                    } else {
+                        stat.textContent = target;
+                    }
+                };
+                updateCount();
+            });
+        }
+        
+        // Use IntersectionObserver on each stat-item or the parent grid
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -191,66 +223,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     observer.unobserve(entry.target);
                 }
             });
-        }, { threshold: 0.5 });
+        }, { threshold: 0.2 });
         
-        document.querySelectorAll('.stats-grid').forEach(grid => {
-            observer.observe(grid);
-        });
-
-        function animateStats() {
-            statNumbers.forEach(stat => {
-                const target = parseInt(stat.getAttribute('data-count'));
-                const suffix = stat.textContent.includes('%') ? '%' : '';
-                let count = 0;
-                const duration = 2000;
-                const increment = target / (duration / 16);
-                
-                const updateCount = () => {
-                    count += increment;
-                    if (count < target) {
-                        stat.textContent = Math.floor(count) + suffix;
-                        requestAnimationFrame(updateCount);
-                    } else {
-                        stat.textContent = target + suffix;
-                    }
-                };
-                
-                updateCount();
-            });
-        }
+        document.querySelectorAll('.stat-item, .stats-grid').forEach(el => observer.observe(el));
     }
-
-    // Contact Form Submission
+    
+    // ---------- CONTACT FORM ----------
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
         contactForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const message = document.getElementById('message').value.trim();
-            
+            const name = document.getElementById('name')?.value.trim();
+            const email = document.getElementById('email')?.value.trim();
+            const message = document.getElementById('message')?.value.trim();
             if (name && email && message) {
                 alert(`Thank you for your message, ${name}! We'll get back to you soon.`);
                 contactForm.reset();
+            } else {
+                alert('Please fill in all fields.');
             }
         });
     }
-
-    // Helper functions
+    
+    // ---------- TRACKING FORM (if exists on tracking page) ----------
+    const trackingForm = document.getElementById('trackingForm');
+    if (trackingForm) {
+        trackingForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const trackingNumber = document.getElementById('trackingNumber')?.value.trim();
+            if (trackingNumber) {
+                simulateTrackingResponse(trackingNumber);
+            } else {
+                alert('Please enter a tracking number.');
+            }
+        });
+    }
+    
+    // Helper functions for tracking simulation
     function simulateTrackingResponse(trackingNumber) {
         const trackingResults = document.getElementById('trackingResults');
         if (!trackingResults) return;
-        
-        // Show loading state
-        trackingResults.innerHTML = `
-            <div class="tracking-loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Searching for shipment ${trackingNumber}...</p>
-            </div>
-        `;
-        
-        // Simulate API delay
+        trackingResults.innerHTML = `<div class="tracking-loading"><i class="fas fa-spinner fa-spin"></i><p>Searching for shipment ${trackingNumber}...</p></div>`;
         setTimeout(() => {
             const statuses = ['pending', 'in-transit', 'delivered'];
             const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
@@ -259,298 +272,101 @@ document.addEventListener('DOMContentLoaded', function() {
             deliveredDate.setDate(today.getDate() + Math.floor(Math.random() * 5) + 1);
             const shippedDate = new Date(today);
             shippedDate.setDate(today.getDate() - Math.floor(Math.random() * 3) - 1);
-            
             trackingResults.innerHTML = generateTrackingHTML(trackingNumber, randomStatus, shippedDate, deliveredDate);
         }, 1500);
     }
-
+    
     function generateTrackingHTML(trackingNumber, status, shippedDate, deliveredDate) {
-        return `
-            <div class="tracking-details">
-                <div class="tracking-status">
-                    <div class="tracking-id">Tracking #: ${trackingNumber}</div>
-                    <div class="status-badge ${status}">
-                        ${status.replace('-', ' ')}
-                    </div>
-                </div>
-                <div class="tracking-progress">
-                    <div class="progress-steps">
-                        <div class="progress-bar" style="width: ${status === 'pending' ? '0%' : status === 'in-transit' ? '50%' : '100%'}"></div>
-                        ${generateProgressSteps(status, shippedDate, deliveredDate)}
-                    </div>
-                </div>
-                <div class="tracking-history">
-                    <h3>Shipment History</h3>
-                    ${generateHistoryItems(status, shippedDate, deliveredDate)}
+        return `<div class="tracking-details">
+            <div class="tracking-status">
+                <div class="tracking-id">Tracking #: ${trackingNumber}</div>
+                <div class="status-badge ${status}">${status.replace('-', ' ')}</div>
+            </div>
+            <div class="tracking-progress">
+                <div class="progress-steps">
+                    <div class="progress-bar" style="width: ${status === 'pending' ? '0%' : status === 'in-transit' ? '50%' : '100%'}"></div>
+                    ${generateProgressSteps(status, shippedDate, deliveredDate)}
                 </div>
             </div>
-        `;
+            <div class="tracking-history"><h3>Shipment History</h3>${generateHistoryItems(status, shippedDate, deliveredDate)}</div>
+        </div>`;
     }
-
+    
     function generateProgressSteps(status, shippedDate, deliveredDate) {
-        return `
-            <div class="progress-step">
-                <div class="step-icon ${status !== 'pending' ? 'completed' : 'active'}">
-                    <i class="fas fa-box"></i>
-                </div>
-                <div class="step-label ${status !== 'pending' ? 'active' : ''}">Processed</div>
-                <div class="step-date">${formatDate(new Date(shippedDate.setDate(shippedDate.getDate() - 1)))}</div>
-            </div>
-            <div class="progress-step">
-                <div class="step-icon ${status === 'in-transit' ? 'active' : status === 'delivered' ? 'completed' : ''}">
-                    <i class="fas fa-shipping-fast"></i>
-                </div>
-                <div class="step-label ${status !== 'pending' ? 'active' : ''}">Shipped</div>
-                <div class="step-date">${formatDate(shippedDate)}</div>
-            </div>
-            <div class="progress-step">
-                <div class="step-icon ${status === 'delivered' ? 'completed' : ''}">
-                    <i class="fas fa-check"></i>
-                </div>
-                <div class="step-label ${status === 'delivered' ? 'active' : ''}">Delivered</div>
-                <div class="step-date">${status === 'delivered' ? formatDate(deliveredDate) : 'Estimated: ' + formatDate(deliveredDate)}</div>
-            </div>
-        `;
+        const processedDate = new Date(shippedDate);
+        processedDate.setDate(shippedDate.getDate() - 1);
+        return `<div class="progress-step">
+            <div class="step-icon ${status !== 'pending' ? 'completed' : 'active'}"><i class="fas fa-box"></i></div>
+            <div class="step-label ${status !== 'pending' ? 'active' : ''}">Processed</div>
+            <div class="step-date">${formatDate(processedDate)}</div>
+        </div>
+        <div class="progress-step">
+            <div class="step-icon ${status === 'in-transit' ? 'active' : status === 'delivered' ? 'completed' : ''}"><i class="fas fa-shipping-fast"></i></div>
+            <div class="step-label ${status !== 'pending' ? 'active' : ''}">Shipped</div>
+            <div class="step-date">${formatDate(shippedDate)}</div>
+        </div>
+        <div class="progress-step">
+            <div class="step-icon ${status === 'delivered' ? 'completed' : ''}"><i class="fas fa-check"></i></div>
+            <div class="step-label ${status === 'delivered' ? 'active' : ''}">Delivered</div>
+            <div class="step-date">${status === 'delivered' ? formatDate(deliveredDate) : 'Estimated: ' + formatDate(deliveredDate)}</div>
+        </div>`;
     }
-
+    
     function generateHistoryItems(status, shippedDate, deliveredDate) {
-        let html = `
-            <div class="history-item">
-                <div class="history-icon">
-                    <i class="fas fa-check"></i>
-                </div>
-                <div class="history-content">
-                    <h4 class="history-title">Order Processed</h4>
-                    <div class="history-date">${formatDate(new Date(shippedDate.setDate(shippedDate.getDate() - 1)))}</div>
-                    <div class="history-location">New York, USA</div>
-                </div>
-            </div>
-        `;
-
+        const processedDate = new Date(shippedDate);
+        processedDate.setDate(shippedDate.getDate() - 1);
+        let html = `<div class="history-item"><div class="history-icon"><i class="fas fa-check"></i></div>
+            <div class="history-content"><h4 class="history-title">Order Processed</h4>
+            <div class="history-date">${formatDate(processedDate)}</div><div class="history-location">New York, USA</div></div></div>`;
         if (status !== 'pending') {
-            html += `
-                <div class="history-item">
-                    <div class="history-icon">
-                        <i class="fas fa-shipping-fast"></i>
-                    </div>
-                    <div class="history-content">
-                        <h4 class="history-title">Package Shipped</h4>
-                        <div class="history-date">${formatDate(shippedDate)}</div>
-                        <div class="history-location">New York, USA</div>
-                    </div>
-                </div>
-            `;
+            html += `<div class="history-item"><div class="history-icon"><i class="fas fa-shipping-fast"></i></div>
+                <div class="history-content"><h4 class="history-title">Package Shipped</h4>
+                <div class="history-date">${formatDate(shippedDate)}</div><div class="history-location">New York, USA</div></div></div>`;
         }
-
         if (status === 'in-transit') {
-            html += `
-                <div class="history-item">
-                    <div class="history-icon">
-                        <i class="fas fa-plane"></i>
-                    </div>
-                    <div class="history-content">
-                        <h4 class="history-title">In Transit</h4>
-                        <div class="history-date">${formatDate(new Date())}</div>
-                        <div class="history-location">In transit to destination</div>
-                    </div>
-                </div>
-            `;
+            html += `<div class="history-item"><div class="history-icon"><i class="fas fa-plane"></i></div>
+                <div class="history-content"><h4 class="history-title">In Transit</h4>
+                <div class="history-date">${formatDate(new Date())}</div><div class="history-location">In transit to destination</div></div></div>`;
         }
-
         if (status === 'delivered') {
-            html += `
-                <div class="history-item">
-                    <div class="history-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <div class="history-content">
-                        <h4 class="history-title">Delivered</h4>
-                        <div class="history-date">${formatDate(deliveredDate)}</div>
-                        <div class="history-location">Delivered to recipient</div>
-                    </div>
-                </div>
-            `;
+            html += `<div class="history-item"><div class="history-icon"><i class="fas fa-home"></i></div>
+                <div class="history-content"><h4 class="history-title">Delivered</h4>
+                <div class="history-date">${formatDate(deliveredDate)}</div><div class="history-location">Delivered to recipient</div></div></div>`;
         }
-
         return html;
     }
-
+    
     function formatDate(date) {
-        return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
-});
-
-
-
-
-
-
-
-
-
-// Add this to your existing script.js file
-document.addEventListener('DOMContentLoaded', function() {
-    // Hero Video Handling
-    const heroVideo = document.querySelector('.hero video');
     
-    // Check if mobile device and fallback to image if needed
-    function handleVideoFallback() {
-        if (window.innerWidth <= 768) {
-            // On mobile, pause video and rely on CSS fallback
-            if (heroVideo) {
-                heroVideo.pause();
-            }
-        } else {
-            // On desktop, ensure video plays
-            if (heroVideo) {
-                heroVideo.play().catch(e => {
-                    console.log("Video autoplay prevented:", e);
-                    // Show play button or handle accordingly
-                });
-            }
-        }
-    }
-
-    // Initial check
-    handleVideoFallback();
-    
-    // Check on resize
-    window.addEventListener('resize', handleVideoFallback);
-
-    // Scroll down button functionality
+    // ---------- SCROLL DOWN BUTTON (Hero) ----------
     const scrollDownBtn = document.querySelector('.scroll-down');
     if (scrollDownBtn) {
         scrollDownBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            window.scrollTo({
-                top: window.innerHeight - 80,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: window.innerHeight - 80, behavior: 'smooth' });
         });
     }
-
-    // Rest of your existing JavaScript...
-});
-
-
-
-// Video handling with fallback
-function initHeroVideo() {
-    const videoContainer = document.querySelector('.video-container');
-    const desktopVideo = document.querySelector('.desktop-video');
-    const mobileVideo = document.querySelector('.mobile-video');
     
-    // Check if mobile
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const videoToUse = isMobile ? mobileVideo : desktopVideo;
-    
-    if (videoToUse) {
-        // Force mute (required for iOS)
-        videoToUse.muted = true;
-        
-        // Attempt to play
-        const playPromise = videoToUse.play();
-        
-        if (playPromise !== undefined) {
-            playPromise.catch(() => {
-                // If autoplay fails, show fallback
-                videoContainer.classList.add('video-failed');
-            });
-        }
-    }
-}
-
-// Initialize on load and if orientation changes
-window.addEventListener('load', initHeroVideo);
-window.addEventListener('orientationchange', initHeroVideo);
-
-
-
-
-
-
-
-
-// Force video to play on all devices
-document.addEventListener('DOMContentLoaded', function() {
-    const video = document.querySelector('.hero video');
-    
-    if (video) {
-        // Function to attempt playing video
+    // ---------- VIDEO HANDLING (unified) ----------
+    const heroVideo = document.querySelector('.hero video');
+    if (heroVideo) {
         function attemptPlay() {
-            video.play().then(() => {
-                console.log('Video playing successfully');
-            }).catch(error => {
-                console.log('Autoplay prevented:', error);
-                // Show a subtle play button if needed
-                addPlayButton();
+            heroVideo.play().catch(() => {
+                // autoplay blocked – do nothing
             });
         }
-        
-        // Add play button for mobile browsers that block autoplay
-        function addPlayButton() {
-            const heroSection = document.querySelector('.hero');
-            const playButton = document.createElement('div');
-            playButton.innerHTML = '<i class="fas fa-play-circle"></i>';
-            playButton.style.cssText = `
-                position: absolute;
-                bottom: 100px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 10;
-                background: rgba(255,215,0,0.9);
-                color: #000;
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                font-size: 24px;
-                transition: all 0.3s ease;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            `;
-            
-            playButton.onclick = function() {
-                video.play();
-                playButton.style.display = 'none';
-            };
-            
-            heroSection.appendChild(playButton);
-            
-            // Auto-hide play button after 3 seconds
-            setTimeout(() => {
-                if (playButton.parentNode) {
-                    playButton.style.opacity = '0';
-                    setTimeout(() => {
-                        if (playButton.parentNode) playButton.remove();
-                    }, 300);
-                }
-            }, 3000);
-        }
-        
-        // Try to play immediately
+        // Force muted for autoplay policies
+        heroVideo.muted = true;
         attemptPlay();
-        
         // Also try on user interaction
-        document.body.addEventListener('touchstart', function() {
-            if (video.paused) attemptPlay();
-        }, { once: true });
-        
-        document.body.addEventListener('click', function() {
-            if (video.paused) attemptPlay();
-        }, { once: true });
-        
-        // Ensure video is properly sized
-        video.addEventListener('loadedmetadata', function() {
-            console.log('Video loaded');
-        });
+        const playOnInteraction = () => {
+            if (heroVideo.paused) attemptPlay();
+            document.body.removeEventListener('touchstart', playOnInteraction);
+            document.body.removeEventListener('click', playOnInteraction);
+        };
+        document.body.addEventListener('touchstart', playOnInteraction, { once: true });
+        document.body.addEventListener('click', playOnInteraction, { once: true });
     }
 });
