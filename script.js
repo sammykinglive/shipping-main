@@ -469,3 +469,88 @@ function initHeroVideo() {
 // Initialize on load and if orientation changes
 window.addEventListener('load', initHeroVideo);
 window.addEventListener('orientationchange', initHeroVideo);
+
+
+
+
+
+
+
+
+// Force video to play on all devices
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.querySelector('.hero video');
+    
+    if (video) {
+        // Function to attempt playing video
+        function attemptPlay() {
+            video.play().then(() => {
+                console.log('Video playing successfully');
+            }).catch(error => {
+                console.log('Autoplay prevented:', error);
+                // Show a subtle play button if needed
+                addPlayButton();
+            });
+        }
+        
+        // Add play button for mobile browsers that block autoplay
+        function addPlayButton() {
+            const heroSection = document.querySelector('.hero');
+            const playButton = document.createElement('div');
+            playButton.innerHTML = '<i class="fas fa-play-circle"></i>';
+            playButton.style.cssText = `
+                position: absolute;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 10;
+                background: rgba(255,215,0,0.9);
+                color: #000;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 24px;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            `;
+            
+            playButton.onclick = function() {
+                video.play();
+                playButton.style.display = 'none';
+            };
+            
+            heroSection.appendChild(playButton);
+            
+            // Auto-hide play button after 3 seconds
+            setTimeout(() => {
+                if (playButton.parentNode) {
+                    playButton.style.opacity = '0';
+                    setTimeout(() => {
+                        if (playButton.parentNode) playButton.remove();
+                    }, 300);
+                }
+            }, 3000);
+        }
+        
+        // Try to play immediately
+        attemptPlay();
+        
+        // Also try on user interaction
+        document.body.addEventListener('touchstart', function() {
+            if (video.paused) attemptPlay();
+        }, { once: true });
+        
+        document.body.addEventListener('click', function() {
+            if (video.paused) attemptPlay();
+        }, { once: true });
+        
+        // Ensure video is properly sized
+        video.addEventListener('loadedmetadata', function() {
+            console.log('Video loaded');
+        });
+    }
+});
